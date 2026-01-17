@@ -7,6 +7,10 @@
     <title>AI美育潜力测评 - 激发孩子无限可能</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+      // 兼容性补丁：确保在浏览器环境下 process.env 不会报错
+      window.process = window.process || { env: {} };
+    </script>
     <style>
         body { font-family: 'Noto Sans SC', sans-serif; background: #f8fafc; }
         .glass-morphism {
@@ -29,7 +33,6 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- 显式引入入口文件，确保 Vite 能够爬取并转换 TSX/React 组件 -->
     <script type="module" src="./index.tsx"></script>
 </body>
 </html>

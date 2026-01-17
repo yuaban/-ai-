@@ -3,8 +3,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AssessmentResult, AIReport, Category } from "../types";
 
 export const generateAIReport = async (result: AssessmentResult): Promise<AIReport> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
   const scoreSummary = Object.entries(result.scores)
     .map(([cat, score]) => `${cat}: ${score}/30`)
     .join(', ');
@@ -29,9 +27,16 @@ export const generateAIReport = async (result: AssessmentResult): Promise<AIRepo
   `;
 
   try {
+    // 动态获取 API KEY 并在 try 块内初始化，防止 process.env 未定义导致崩溃
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      throw new Error("API_KEY is not configured in environment variables.");
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: prompt,
+      contents: [{ parts: [{ text: prompt }] }],
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -50,15 +55,17 @@ export const generateAIReport = async (result: AssessmentResult): Promise<AIRepo
       }
     });
 
-    const jsonText = response.text || "{}";
-    return JSON.parse(jsonText);
+    const text = response.text;
+    if (!text) throw new Error("Empty response from AI");
+    return JSON.parse(text);
   } catch (error) {
-    console.error("Failed to generate AI report:", error);
+    console.error("AI Report Generation Error:", error);
+    // 返回兜底数据，确保用户至少能看到结果
     return {
-      summary: "测评数据已记录，您的孩子在多个维度表现出极佳的潜质。在当前的AI时代，这种原生创造力是极其宝贵的资产。",
-      strengths: ["想象力丰富", "观察力敏锐", "逻辑感强"],
-      growthPotential: "通过AI辅助，孩子可以将复杂的想象力瞬间具象化。",
-      aiEmpowerment: "传统技法门槛往往限制了孩子的表达。AI美育课程旨在移除这些障碍，让孩子的灵感直接转化为作品。"
+      summary: "您的孩子在多个维度表现出极佳的艺术潜质。在当前的AI时代，这种原生创造力是孩子最核心的竞争力。",
+      strengths: ["想象力表达独特", "对色彩感知敏锐", "具备优秀的逻辑联想能力"],
+      growthPotential: "孩子目前处于创意迸发期，通过AI辅助，可以将大脑中复杂的想象力瞬间具象化，突破手部动作发育的物理限制。",
+      aiEmpowerment: "传统美术学习中，复杂的技法往往会消磨孩子的耐心。米多多 AI 课程旨在让孩子直接通过‘思维创作’，用 AI 工具释放被技法限制的灵感。"
     };
   }
 };

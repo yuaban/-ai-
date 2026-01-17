@@ -24,23 +24,25 @@ const App: React.FC = () => {
     if (currentIdx < QUESTIONS.length - 1) {
       setCurrentIdx(currentIdx + 1);
     } else {
-      // Finalize
       setLoading(true);
-      // Fix: Added explicit types for acc and q to resolve potential "unknown" inference
-      const scores = QUESTIONS.reduce((acc: Record<Category, number>, q: Question) => {
-        const cat = q.category;
-        acc[cat] = (acc[cat] || 0) + (newAnswers[q.id] || 0);
-        return acc;
-      }, {} as Record<Category, number>);
+      try {
+        const scores = QUESTIONS.reduce((acc: Record<Category, number>, q: Question) => {
+          const cat = q.category;
+          acc[cat] = (acc[cat] || 0) + (newAnswers[q.id] || 0);
+          return acc;
+        }, {} as Record<Category, number>);
 
-      // Fix: Explicitly type reduce arguments and cast Object.values result to avoid "unknown" error
-      const totalScore = (Object.values(scores) as number[]).reduce((a: number, b: number) => a + b, 0);
-      const result: AssessmentResult = { scores, totalScore, answers: newAnswers };
-      
-      const report = await generateAIReport(result);
-      setAiReport(report);
-      setLoading(false);
-      setCurrentIdx(QUESTIONS.length); // Results state
+        const totalScore = (Object.values(scores) as number[]).reduce((a: number, b: number) => a + b, 0);
+        const result: AssessmentResult = { scores, totalScore, answers: newAnswers };
+        
+        const report = await generateAIReport(result);
+        setAiReport(report);
+        setCurrentIdx(QUESTIONS.length); // 只有成功获取报告后才跳转
+      } catch (err) {
+        console.error("Critical assessment error:", err);
+      } finally {
+        setLoading(false); // 无论成功失败，务必关闭加载状态
+      }
     }
   };
 
@@ -149,13 +151,11 @@ const App: React.FC = () => {
         {currentIdx === QUESTIONS.length && aiReport && (
           <Results 
             result={{
-              // Fix: Explicit types for reduce to ensure reliability across environments
               scores: QUESTIONS.reduce((acc: Record<Category, number>, q: Question) => {
                 const cat = q.category;
                 acc[cat] = (acc[cat] || 0) + (answers[q.id] || 0);
                 return acc;
               }, {} as Record<Category, number>),
-              // Fix: Added explicit types and type assertion for totalScore calculation
               totalScore: (Object.values(answers) as number[]).reduce((a: number, b: number) => a + b, 0),
               answers
             }}
