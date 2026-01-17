@@ -85,7 +85,7 @@ const App: React.FC = () => {
                 </li>
                 <li className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">3</span>
-                  <span>测评结束将获得由 Gemini AI 生成的深度分析报告</span>
+                  <span>测评结束后将获得由米多多 AI 生成的深度分析报告</span>
                 </li>
               </ul>
             </div>
@@ -136,7 +136,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-gray-800">AI 正在深度分析中...</h2>
+              <h2 className="text-2xl font-bold text-gray-800">米多多 AI 正在深度分析中...</h2>
               <p className="text-gray-500 animate-pulse">正在生成个性化的成长潜力报告，请稍候</p>
             </div>
             <div className="max-w-xs text-xs text-gray-400">
