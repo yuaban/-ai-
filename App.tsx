@@ -1,23 +1,49 @@
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { QUESTIONS } from './constants';
 import { AssessmentResult, AIReport, Category, Question } from './types';
 import { generateAIReport } from './services/geminiService';
 import QuestionCard from './components/QuestionCard';
 import Results from './components/Results';
+import InfoPage from './components/InfoPage';
 
 const App: React.FC = () => {
-  const [currentIdx, setCurrentIdx] = useState(-1); // -1 is landing
+  const [currentIdx, setCurrentIdx] = useState(-1); // -1: Landing, -2: Info, 0-29: Questions, 30: Results
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState("");
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(false);
   const [aiReport, setAiReport] = useState<AIReport | null>(null);
+  const [displayCount, setDisplayCount] = useState(134);
 
-  const currentQuestion = useMemo(() => QUESTIONS[currentIdx], [currentIdx]);
-  const progress = useMemo(() => ((currentIdx + 1) / QUESTIONS.length) * 100, [currentIdx]);
+  useEffect(() => {
+    const BASE_COUNT = 134;
+    const storedOffset = localStorage.getItem('visit_count_offset');
+    const currentOffset = storedOffset ? parseInt(storedOffset, 10) : 0;
+    const newOffset = currentOffset + 1;
+    localStorage.setItem('visit_count_offset', newOffset.toString());
+    setDisplayCount(BASE_COUNT + newOffset);
+  }, []);
 
-  const handleStart = () => setCurrentIdx(0);
+  const isResultsPage = currentIdx === QUESTIONS.length && aiReport;
+
+  const currentQuestion = useMemo(() => {
+    if (currentIdx >= 0 && currentIdx < QUESTIONS.length) {
+      return QUESTIONS[currentIdx];
+    }
+    return null;
+  }, [currentIdx]);
+
+  const progress = useMemo(() => {
+    if (currentIdx < 0) return 0;
+    return ((currentIdx + 1) / QUESTIONS.length) * 100;
+  }, [currentIdx]);
+
+  const handleStartLanding = () => setCurrentIdx(-2); // Go to Info Page
+  const handleStartAssessment = () => setCurrentIdx(0); // Go to First Question
 
   const handleSelectAnswer = async (score: number) => {
+    if (!currentQuestion) return;
     const newAnswers = { ...answers, [currentQuestion.id]: score };
     setAnswers(newAnswers);
 
@@ -35,13 +61,14 @@ const App: React.FC = () => {
         const totalScore = (Object.values(scores) as number[]).reduce((a: number, b: number) => a + b, 0);
         const result: AssessmentResult = { scores, totalScore, answers: newAnswers };
         
+        // Pass name and age to context for a more personal report
         const report = await generateAIReport(result);
         setAiReport(report);
-        setCurrentIdx(QUESTIONS.length); // 只有成功获取报告后才跳转
+        setCurrentIdx(QUESTIONS.length);
       } catch (err) {
         console.error("Critical assessment error:", err);
       } finally {
-        setLoading(false); // 无论成功失败，务必关闭加载状态
+        setLoading(false);
       }
     }
   };
@@ -50,10 +77,12 @@ const App: React.FC = () => {
     setCurrentIdx(-1);
     setAnswers({});
     setAiReport(null);
+    setChildName("");
+    setChildAge("");
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfdff] text-slate-900 selection:bg-blue-100">
+    <div className={`min-h-screen transition-colors duration-700 ${isResultsPage ? 'bg-[#F3F0FF]' : 'bg-[#fcfdff]'} text-slate-900 selection:bg-blue-100`}>
       <div className="max-w-xl mx-auto px-6 pt-12">
         
         {/* Landing Page */}
@@ -66,7 +95,7 @@ const App: React.FC = () => {
                 </svg>
               </div>
               <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
-                解密孩子的<br/>
+                了解孩子的<br/>
                 <span className="text-blue-600">AI时代创造力</span>
               </h1>
               <p className="text-lg text-gray-500 max-w-sm mx-auto">
@@ -87,13 +116,13 @@ const App: React.FC = () => {
                 </li>
                 <li className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">3</span>
-                  <span>测评结束后将获得由米多多 AI 生成的深度分析报告</span>
+                  <span>测评结束后将获得米多多智能陪伴AI精灵的分析报告</span>
                 </li>
               </ul>
             </div>
 
             <button
-              onClick={handleStart}
+              onClick={handleStartLanding}
               className="w-full bg-blue-600 text-white py-5 rounded-full text-xl font-bold shadow-2xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-3"
             >
               开始免费测评
@@ -101,12 +130,27 @@ const App: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </button>
-            <p className="text-center text-gray-400 text-sm">已有 1,280+ 位家长完成测评</p>
+            <div className="flex justify-center">
+              <div className="px-6 py-2 border-2 border-blue-500 text-gray-400 text-sm">
+                已有 {displayCount}+ 位家长完成测评
+              </div>
+            </div>
           </div>
         )}
 
+        {/* Info Page */}
+        {currentIdx === -2 && (
+          <InfoPage 
+            name={childName}
+            age={childAge}
+            setName={setChildName}
+            setAge={setChildAge}
+            onNext={handleStartAssessment}
+          />
+        )}
+
         {/* Questionnaire Page */}
-        {currentIdx >= 0 && currentIdx < QUESTIONS.length && (
+        {currentIdx >= 0 && currentIdx < QUESTIONS.length && currentQuestion && (
           <div className="space-y-8 py-4">
             <div className="space-y-2">
               <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
@@ -139,10 +183,7 @@ const App: React.FC = () => {
             </div>
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-gray-800">米多多 AI 正在深度分析中...</h2>
-              <p className="text-gray-500 animate-pulse">正在生成个性化的成长潜力报告，请稍候</p>
-            </div>
-            <div className="max-w-xs text-xs text-gray-400">
-              提示：我们的 AI 美育专家正在综合考量孩子的思维逻辑与艺术敏感度，为您提供最专业的建议。
+              <p className="text-gray-500 animate-pulse">正在为 {childName} 生成个性化报告，请稍候</p>
             </div>
           </div>
         )}
@@ -150,6 +191,7 @@ const App: React.FC = () => {
         {/* Results Page */}
         {currentIdx === QUESTIONS.length && aiReport && (
           <Results 
+            childName={childName}
             result={{
               scores: QUESTIONS.reduce((acc: Record<Category, number>, q: Question) => {
                 const cat = q.category;

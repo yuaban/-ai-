@@ -4,12 +4,13 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } fro
 import { AssessmentResult, AIReport, Category } from '../types';
 
 interface Props {
+  childName: string;
   result: AssessmentResult;
   aiReport: AIReport;
   onRestart: () => void;
 }
 
-const Results: React.FC<Props> = ({ result, aiReport, onRestart }) => {
+const Results: React.FC<Props> = ({ childName, result, aiReport, onRestart }) => {
   const chartData = Object.entries(result.scores).map(([name, value]) => ({
     subject: name,
     A: value,
@@ -27,13 +28,15 @@ const Results: React.FC<Props> = ({ result, aiReport, onRestart }) => {
         </div>
         
         <div className="relative z-10">
-          <p className="text-blue-100 font-medium mb-2">综合素质潜力分</p>
+          <p className="text-blue-100 font-medium mb-2 truncate max-w-full">
+            {childName} 的综合素质潜力分
+          </p>
           <div className="flex items-baseline gap-2">
             <h2 className="text-7xl font-extrabold">{result.totalScore}</h2>
             <span className="text-2xl text-blue-200">/ 150</span>
           </div>
           <p className="mt-4 text-blue-50 bg-white/10 inline-block px-4 py-1 rounded-full text-sm">
-            您的孩子处于：创意领航员级别 🚀
+            宝贝处于：创意领航员级别 🚀
           </p>
         </div>
       </div>
@@ -65,7 +68,9 @@ const Results: React.FC<Props> = ({ result, aiReport, onRestart }) => {
       <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 space-y-6">
         <div className="flex items-center gap-3">
           <div className="bg-purple-100 p-2 rounded-xl text-purple-600 font-bold">AI</div>
-          <h3 className="text-2xl font-bold text-gray-800 tracking-tight">AI美育潜力分析</h3>
+          <h3 className="text-2xl font-bold text-gray-800 tracking-tight">
+            针对 {childName} 的潜力分析
+          </h3>
         </div>
         
         <div className="prose prose-blue text-gray-600 leading-relaxed">
@@ -85,14 +90,14 @@ const Results: React.FC<Props> = ({ result, aiReport, onRestart }) => {
 
         <div className="space-y-4">
           <div className="bg-indigo-50/50 p-6 rounded-3xl">
-            <h4 className="font-bold text-indigo-900 mb-2 flex items-center gap-2">
+            <h4 className="font-bold text-indigo-900 mb-2 flex items-center gap-2 text-sm">
               ✨ 未来成长空间
             </h4>
             <p className="text-indigo-800 text-sm leading-relaxed">{aiReport.growthPotential}</p>
           </div>
           
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-3xl border-2 border-purple-200">
-            <h4 className="font-bold text-purple-900 mb-2 flex items-center gap-2">
+            <h4 className="font-bold text-purple-900 mb-2 flex items-center gap-2 text-sm">
               🤖 AIGC如何赋能？
             </h4>
             <p className="text-purple-800 text-sm leading-relaxed">{aiReport.aiEmpowerment}</p>
@@ -100,26 +105,15 @@ const Results: React.FC<Props> = ({ result, aiReport, onRestart }) => {
         </div>
       </div>
 
-      {/* Course CTA */}
-      <div className="bg-orange-50 border-2 border-orange-100 rounded-3xl p-8 text-center space-y-4">
-        <h3 className="text-2xl font-bold text-orange-900">
-          不想让孩子的灵感被“技法”磨灭？
-        </h3>
-        <p className="text-orange-800">
-          您的孩子非常适合参加我们的 <b>《未来大师·AI美育创作课》</b>。<br/>
-          跳过枯燥的传统素描训练，直接用思想对话AI，创作属于未来的艺术。
-        </p>
-        <button className="bg-orange-600 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-orange-700 transition-all transform hover:scale-105">
-          预约 0 元体验课
+      {/* Bottom Actions */}
+      <div className="flex justify-center pt-4">
+        <button
+          onClick={onRestart}
+          className="px-12 py-3 border-2 border-blue-500 text-gray-500 font-medium hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600 transition-all rounded-sm bg-white"
+        >
+          重新测试
         </button>
       </div>
-
-      <button
-        onClick={onRestart}
-        className="w-full py-4 text-gray-400 font-medium hover:text-gray-600 transition-colors"
-      >
-        重新测试
-      </button>
     </div>
   );
 };
